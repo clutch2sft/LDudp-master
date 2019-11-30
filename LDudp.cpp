@@ -30,23 +30,26 @@ LDudp::LDudp(IPAddress lip,IPAddress mlip, int lp, int mlp,IPAddress sip)
 
 }
 
+
 // Public Methods //////////////////////////////////////////////////////////////
 // Functions available in Wiring sketches, this library, and other libraries
 
+
 uint8_t LDudp::logD_UDP(char data[], const char c_from[], char f_msg[])
+//uint8_t LDudp::logD_UDP(uint8_t b)
 {
   // eventhough this function is public, it can access
   // and modify this library's private variables
   if (!tg_udp.beginPacket(_logip, _logport)){
-    Log.warning("FAILED! UDP beginpacket Called From:%S f_msg:%S" CR , c_from, f_msg);
+    //Log.warning("FAILED! UDP beginpacket Called From:%S f_msg:%S" CR , c_from, f_msg);
     return 0;
   } 
-  tg_udp.write(data);
+  tg_udp.print(data);
   _ldu_status = tg_udp.endPacket();
   if (!_ldu_status) {
-    Log.warning("FAILED! UDP endPacket Called From:%S f_msg:%S" CR , c_from, f_msg);
+    //Log.warning("FAILED! UDP endPacket Called From:%S f_msg:%S" CR , c_from, f_msg);
   } else {
-    Log.notice("SUCCESS! UDP endPacket Called From:%S f_msg:%S" CR , c_from, f_msg);
+    //Log.notice("SUCCESS! UDP endPacket Called From:%S f_msg:%S" CR , c_from, f_msg);
   }
   return _ldu_status;
 }
@@ -61,9 +64,32 @@ uint8_t LDudp::logM_UDP(char data[], const char c_from[], char f_msg[])
   // eventhough this function is public, it can access
   // and modify this library's private variables
   tg_udp.beginPacketMulticast(_multicastadd, _multicastport, _selfip);
-  tg_udp.print(data);
+  
   return tg_udp.endPacket();
   // it can also call private functions of this library
+
+}
+
+
+size_t LDudp::write( uint8_t b )
+{
+    if (!_collecting) {
+        tg_udp.beginPacket(_logip, _logport);
+        _collecting = 1;
+    }
+    //tg_udp.write(reinterpret_cast<const char*>(b));
+    
+    //tg_udp.write(b, sizeof(buffer));
+    
+    //buffer[ count++ ] = b;
+
+    if (b == '\n') {
+        tg_udp.endPacket();
+        _collecting = 0;
+    } else {
+        tg_udp.write(b);
+    }
+    return 1;
 
 }
 // Private Methods /////////////////////////////////////////////////////////////
